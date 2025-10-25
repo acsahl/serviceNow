@@ -45,11 +45,13 @@ ehthumbs.db
 Thumbs.db
 
 # Data files
-*.csv
 *.json
 *.pkl
 *.h5
 *.hdf5
+
+# Allow ServiceNow data files
+!csv/*.csv
 
 # Logs
 *.log
