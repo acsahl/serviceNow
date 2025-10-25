@@ -68,9 +68,7 @@ Examples:
         print("✅ Data generation complete!")
         
     elif args.command == 'analyze':
-        from data_processor import DataProcessor
         print("🔍 Running ServiceNow data analysis...")
-        processor = DataProcessor()
         
         # Check if actual data files exist
         if not os.path.exists("csv/u_hack.csv") or not os.path.exists("csv/accelerators.csv"):
@@ -78,14 +76,15 @@ Examples:
             print("Please ensure csv/u_hack.csv and csv/accelerators.csv exist.")
             sys.exit(1)
         
-        results = processor.run_complete_analysis()
+        # Run the simple analysis (no external dependencies)
+        import subprocess
+        result = subprocess.run([sys.executable, "simple_analysis.py"], capture_output=True, text=True)
         
-        if "error" not in results:
-            processor.save_results(results, args.output_file)
-            processor.print_summary(results)
+        if result.returncode == 0:
             print("✅ Analysis complete!")
+            print(result.stdout)
         else:
-            print(f"❌ Analysis failed: {results['error']}")
+            print(f"❌ Analysis failed: {result.stderr}")
             sys.exit(1)
         
     elif args.command == 'api':
@@ -110,20 +109,17 @@ Examples:
         
         # Run analysis on actual data
         print("Step 1: Analyzing ServiceNow data...")
-        from data_processor import DataProcessor
-        processor = DataProcessor()
-        results = processor.run_complete_analysis()
+        import subprocess
+        result = subprocess.run([sys.executable, "simple_analysis.py"], capture_output=True, text=True)
         
-        if "error" not in results:
-            processor.save_results(results, args.output_file)
-            processor.print_summary(results)
-            
+        if result.returncode == 0:
             print("✅ Full pipeline complete!")
-            print(f"📊 Results saved to: {args.output_file}")
+            print(result.stdout)
+            print(f"📊 Results saved to: servicenow_analysis_results.json")
             print(f"🌐 To start API: python main.py api")
             print(f"📈 To start dashboard: python main.py dashboard")
         else:
-            print(f"❌ Pipeline failed: {results['error']}")
+            print(f"❌ Pipeline failed: {result.stderr}")
             sys.exit(1)
 
 if __name__ == "__main__":
