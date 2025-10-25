@@ -68,24 +68,25 @@ Examples:
         print("✅ Data generation complete!")
         
     elif args.command == 'analyze':
-        from request_analyzer import RequestAnalyzer
-        print("🔍 Running request analysis...")
-        analyzer = RequestAnalyzer()
+        from data_processor import DataProcessor
+        print("🔍 Running ServiceNow data analysis...")
+        processor = DataProcessor()
         
-        # Check if data files exist
-        for file_path in [args.companies_file, args.requests_file, args.catalog_file]:
-            if not os.path.exists(file_path):
-                print(f"❌ Error: {file_path} not found. Run 'python main.py generate-data' first.")
-                sys.exit(1)
+        # Check if actual data files exist
+        if not os.path.exists("csv/u_hack.csv") or not os.path.exists("csv/accelerators.csv"):
+            print("❌ Error: ServiceNow data files not found in csv/ directory.")
+            print("Please ensure csv/u_hack.csv and csv/accelerators.csv exist.")
+            sys.exit(1)
         
-        results = analyzer.run_complete_analysis(
-            args.companies_file,
-            args.requests_file,
-            args.catalog_file
-        )
+        results = processor.run_complete_analysis()
         
-        analyzer.save_results(results, args.output_file)
-        print("✅ Analysis complete!")
+        if "error" not in results:
+            processor.save_results(results, args.output_file)
+            processor.print_summary(results)
+            print("✅ Analysis complete!")
+        else:
+            print(f"❌ Analysis failed: {results['error']}")
+            sys.exit(1)
         
     elif args.command == 'api':
         import uvicorn
@@ -99,29 +100,31 @@ Examples:
         subprocess.run([sys.executable, "-m", "streamlit", "run", "dashboard/app.py"])
         
     elif args.command == 'full-pipeline':
-        print("🚀 Running full pipeline...")
+        print("🚀 Running full pipeline with actual ServiceNow data...")
         
-        # Step 1: Generate data
-        print("Step 1: Generating sample data...")
-        from data_generator import DataGenerator
-        generator = DataGenerator()
-        companies, requests, catalog = generator.save_data()
+        # Check if actual data files exist
+        if not os.path.exists("csv/u_hack.csv") or not os.path.exists("csv/accelerators.csv"):
+            print("❌ Error: ServiceNow data files not found in csv/ directory.")
+            print("Please ensure csv/u_hack.csv and csv/accelerators.csv exist.")
+            sys.exit(1)
         
-        # Step 2: Run analysis
-        print("Step 2: Running analysis...")
-        from request_analyzer import RequestAnalyzer
-        analyzer = RequestAnalyzer()
-        results = analyzer.run_complete_analysis(
-            args.companies_file,
-            args.requests_file,
-            args.catalog_file
-        )
-        analyzer.save_results(results, args.output_file)
+        # Run analysis on actual data
+        print("Step 1: Analyzing ServiceNow data...")
+        from data_processor import DataProcessor
+        processor = DataProcessor()
+        results = processor.run_complete_analysis()
         
-        print("✅ Full pipeline complete!")
-        print(f"📊 Results saved to: {args.output_file}")
-        print(f"🌐 To start API: python main.py api")
-        print(f"📈 To start dashboard: python main.py dashboard")
+        if "error" not in results:
+            processor.save_results(results, args.output_file)
+            processor.print_summary(results)
+            
+            print("✅ Full pipeline complete!")
+            print(f"📊 Results saved to: {args.output_file}")
+            print(f"🌐 To start API: python main.py api")
+            print(f"📈 To start dashboard: python main.py dashboard")
+        else:
+            print(f"❌ Pipeline failed: {results['error']}")
+            sys.exit(1)
 
 if __name__ == "__main__":
     main()
